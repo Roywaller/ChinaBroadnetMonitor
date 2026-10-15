@@ -280,10 +280,15 @@ if __name__ == "__main__":
     print("密钥配对:", _PUB["n"] == _PRIV["n"])
     rt = "roundtrip-中文-test-12345"
     print("加解密往返:", decrypt_long(encrypt_long(rt)) == rt)
-
-    CAP = "zZ7SCjpGeMRlzdBGjGShc4CgU2tOmRuTVGc8p6v/unVRZhmersk9E9Xtgi1osj5sw7Svvfq1hI801r75T1PK15D/fd1bPI6JwPw9CwaiCN4wE3Htrv1Z6NzRhl+//cSvfy4l7dO8Rt0DQmyvwN5sUSoDS5At5Ek9jfc55J9E+8NRKYRszaWHPnWEOVnzZw6oeGPd1ZUSeF26oqXbti3gue4HKnxbrpSnSL9y3Hy4G6BG6Xf0W9q2XHC4S230OHnefARAEwS0Zh5II30HfHF9Z5l1h3Mq9suCZ3qG/oE0Jm33Hr02E2Jp15hIzcLlzNlDqBa/FMg2XpF8Q9RD7MZ0N68ZftUlF/R/N5kOnOvv8h0Ytk+ddf5Py8dIyWDd2xTzHm/oEKZ+RmyibpfRvXsXhLNEzOWasEPFJLrBQhXKAepL/X79a1xHvcHYjzh/rufWzEiWtieiOL5N2HdrZQccyMZKLuQzEZnwfigWnQ2ViZYbPmpsVs7ntoZbD2kr7wfX/E87IJhN7fgRzFvl9i5FILvbTTlhKkSFXP5pzUGOYE71os/ZtXJmUOxIBcHeLxwjCIThIU2xiX9oMzK+8Ra5j4FoIPrDeQOI7yDoXZXMTdgqs+5iJRYSaKE7YdZ5tTpo9WO9xMS2eUtBNKGzCeaTbDvkVnnJzzlFCJe+v98ILMo="
-    print("真实抓包解密:", urllib.parse.unquote(decrypt_long(CAP)))
     print()
-    b, a = build_payload({"recieveNum": "19286832590", "type": 5})
-    print("生成密文长度:", len(_b64d(b["data"])), "字节")
-    print("Access:", a)
+    print("=== 构造一个加密请求 ===")
+    b, a = build_payload({"recieveNum": "13800138000", "type": 5})
+    print("明文参数  :", {"recieveNum": "13800138000", "type": 5,
+                          "channelId": CHANNEL_ID, "v": API_V})
+    print("生成的 body:", json.dumps(b)[:120] + "...")
+    print("密文长度  :", len(_b64d(b["data"])), "字节（每 256B = 一个 RSA 块）")
+    print("Access    :", a)
+    print()
+    print("=== 解密工具 ===")
+    print("用 decrypt_long('<base64 密文>') 解密任意抓包，")
+    print("再 urllib.parse.unquote() 还原 JSON 明文。")
