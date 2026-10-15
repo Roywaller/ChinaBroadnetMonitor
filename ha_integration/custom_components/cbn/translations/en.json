@@ -1,0 +1,103 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "China Broadnet - Phone",
+        "description": "Enter your China Broadnet phone number.\n\nMake sure the local proxy is running first (`systemctl status cbn-proxy`).",
+        "data": {
+          "phone": "Phone number",
+          "proxy_url": "Proxy service URL"
+        }
+      },
+      "captcha": {
+        "title": "China Broadnet - Image captcha",
+        "description": "Read the 4 characters in the image below:\n\n![captcha]({img_data})\n\n> Hard to read? Check \"Refresh\" and submit for a new one.",
+        "data": {
+          "image_code": "Image captcha (4 characters)",
+          "refresh": "Refresh"
+        }
+      },
+      "sms": {
+        "title": "China Broadnet - SMS code",
+        "description": "An SMS has been sent to {phone}. Enter the code you received.\n\n(The image captcha is submitted together with it.)",
+        "data": {
+          "sms_code": "SMS code"
+        }
+      }
+    },
+    "error": {
+      "invalid_phone": "Phone number must be 11 digits",
+      "proxy_unreachable": "Cannot reach the proxy service. Check that cbn-proxy is running",
+      "captcha_failed": "Failed to fetch the image captcha, please retry",
+      "captcha_required": "Please enter the image captcha",
+      "cannot_send_code": "Failed to send SMS. Retry or check the phone number",
+      "login_failed": "Login failed. Check the SMS code"
+    },
+    "abort": {
+      "already_configured": "This phone number is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "China Broadnet options",
+        "menu_options": {
+          "relogin": "Log in again (when the session expired)"
+        }
+      },
+      "relogin": {
+        "title": "Log in again",
+        "description": "Account: {phone}\n\n**Step 1**: read the image captcha below and submit; an SMS will be sent.\n\n![captcha]({img_data})\n\nCheck \"Refresh\" if unclear.",
+        "data": {
+          "image_code": "Image captcha (4 characters)",
+          "refresh": "Refresh",
+          "sms_code": "SMS code (step 2)"
+        }
+      }
+    },
+    "error": {
+      "captcha_required": "Please enter the image captcha",
+      "captcha_wrong": "Image captcha was wrong. A new one was fetched, please retry",
+      "captcha_failed": "Failed to fetch the image captcha",
+      "cannot_send_code": "Failed to send SMS",
+      "login_failed": "Login failed. Check the codes"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "flow_total": {
+        "name": "Total data this month"
+      },
+      "flow_used": {
+        "name": "Data used this month"
+      },
+      "flow_left": {
+        "name": "Data remaining"
+      },
+      "flow_pct": {
+        "name": "Data usage rate"
+      },
+      "flow_left_carried": {
+        "name": "Carried-over remaining"
+      },
+      "voice_total": {
+        "name": "Voice used"
+      },
+      "sms_total": {
+        "name": "SMS used"
+      },
+      "pack_name": {
+        "name": "Current plan"
+      },
+      "pack_fee": {
+        "name": "Monthly plan fee"
+      },
+      "balance": {
+        "name": "Account balance"
+      },
+      "month_fee": {
+        "name": "Spent this month"
+      }
+    }
+  }
+}

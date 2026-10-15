@@ -1,0 +1,12 @@
+{
+  "domain": "cbn",
+  "name": "中国广电",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://www.10099.com.cn/",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://www.10099.com.cn/",
+  "requirements": [],
+  "version": "1.0.0"
+}

@@ -1,0 +1,103 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "中国广电 - 手机号",
+        "description": "请输入广电手机号。\n\n首次使用请确认代理服务已启动（`systemctl status cbn-proxy`）。",
+        "data": {
+          "phone": "手机号",
+          "proxy_url": "代理服务地址"
+        }
+      },
+      "captcha": {
+        "title": "中国广电 - 图形验证码",
+        "description": "请识别下图中的 4 位字符并填入：\n\n![图形验证码]({img_data})\n\n> 图片看不清？勾选「换一张」并提交，会重新获取。",
+        "data": {
+          "image_code": "图形验证码（图上 4 位字符）",
+          "refresh": "换一张"
+        }
+      },
+      "sms": {
+        "title": "中国广电 - 短信验证码",
+        "description": "短信已发送至 {phone}，请输入收到的验证码。\n\n（图形验证码将与此短信验证码一起提交）",
+        "data": {
+          "sms_code": "短信验证码"
+        }
+      }
+    },
+    "error": {
+      "invalid_phone": "手机号格式不正确（应为 11 位数字）",
+      "proxy_unreachable": "无法连接代理服务，请检查 cbn-proxy 是否运行",
+      "captcha_failed": "获取图形验证码失败，请稍后重试",
+      "captcha_required": "请先填写图形验证码",
+      "cannot_send_code": "发送短信失败，请稍后重试或检查手机号",
+      "login_failed": "登录失败，请检查短信验证码是否正确"
+    },
+    "abort": {
+      "already_configured": "该手机号已配置"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "中国广电 选项",
+        "menu_options": {
+          "relogin": "重新登录（会话过期时使用）"
+        }
+      },
+      "relogin": {
+        "title": "重新登录",
+        "description": "账号：{phone}\n\n**第 1 步**：识别下图图形验证码并填写，提交后手机会收到短信。\n\n![图形验证码]({img_data})\n\n看不清可勾选「换一张」。",
+        "data": {
+          "image_code": "图形验证码（图上 4 位字符）",
+          "refresh": "换一张",
+          "sms_code": "短信验证码（第 2 步填写）"
+        }
+      }
+    },
+    "error": {
+      "captcha_required": "请先填写图形验证码",
+      "captcha_wrong": "图形验证码错误，已刷新，请重新填写",
+      "captcha_failed": "获取图形验证码失败",
+      "cannot_send_code": "发送短信失败",
+      "login_failed": "登录失败，请检查验证码"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "flow_total": {
+        "name": "本月总流量"
+      },
+      "flow_used": {
+        "name": "本月已用流量"
+      },
+      "flow_left": {
+        "name": "剩余流量"
+      },
+      "flow_pct": {
+        "name": "流量使用率"
+      },
+      "flow_left_carried": {
+        "name": "结转剩余流量"
+      },
+      "voice_total": {
+        "name": "语音已用"
+      },
+      "sms_total": {
+        "name": "短信已用"
+      },
+      "pack_name": {
+        "name": "当前套餐"
+      },
+      "pack_fee": {
+        "name": "套餐月费"
+      },
+      "balance": {
+        "name": "账户余额"
+      },
+      "month_fee": {
+        "name": "当月消费"
+      }
+    }
+  }
+}
