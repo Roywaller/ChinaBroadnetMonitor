@@ -207,6 +207,24 @@ class CbnCard extends HTMLElement {
     return Number.isFinite(value) ? value : null;
   }
 
+  /**
+   * 平均每日可用流量 = 剩余流量 / 本月剩余天数（含今天）。
+   * 纯前端按自然月计算，不需要后端新增传感器。
+   * 返回 { perDay, daysLeft }，数据不足时 perDay 为 null。
+   */
+  dailyAllowance(remainEntry) {
+    const remain = this.numberValue(remainEntry);
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const today = now.getDate();
+    // 含今天在内，最少按 1 天算，避免除零
+    const daysLeft = Math.max(1, totalDays - today + 1);
+    if (remain === null) return { perDay: null, daysLeft };
+    return { perDay: remain / daysLeft, daysLeft };
+  }
+
   render(force = false) {
     if (!this.config) return;
     const key = JSON.stringify({
@@ -247,7 +265,7 @@ class CbnCard extends HTMLElement {
               ${this.summaryItem("当月消费", monthFee, "mdi:currency-cny", "orange")}
             </div>
             <div class="meters">
-              ${this.progress("本月流量", dataRate, flowLeft, flowTotal)}
+              ${this.progress("本月流量", dataRate, flowLeft, flowTotal, "", true)}
             </div>
             <div class="accordions">
               ${this.accordionSection("流量", "mdi:cellphone-link",
@@ -310,7 +328,10 @@ class CbnCard extends HTMLElement {
           .meter-dot.warn { background: #FFB300; }
           .meter-dot.danger { background: #E53935; }
           .meter-volume { font-weight: bold; font-size: 14px; }
+          /* 进度条 + 右侧「日均可用」徽标 同一行 */
+          .meter-body { display: flex; align-items: center; gap: 10px; }
           .meter-bar {
+            flex: 1 1 auto; min-width: 0;
             height: 8px; border-radius: 4px; overflow: hidden;
             background: var(--divider-color, rgba(0,0,0,0.08));
           }
@@ -318,6 +339,20 @@ class CbnCard extends HTMLElement {
           .meter-bar-fill.normal { background: linear-gradient(90deg, #66bb6a, #43a047); }
           .meter-bar-fill.warn { background: linear-gradient(90deg, #ffca28, #ffb300); }
           .meter-bar-fill.danger { background: linear-gradient(90deg, #ef5350, #e53935); }
+          /* 日均可用：浅色胶囊，不与上方百分比抢视觉重心 */
+          .daily-badge {
+            flex: 0 0 auto;
+            display: flex; align-items: center; gap: 5px;
+            padding: 3px 9px 3px 7px; border-radius: 999px;
+            background: var(--primary-color, #2196f3);
+            background: color-mix(in srgb, var(--primary-color, #2196f3) 12%, transparent);
+            color: var(--primary-color, #2196f3);
+            white-space: nowrap; cursor: default;
+          }
+          .daily-badge ha-icon { --mdi-icon-size: 14px; opacity: 0.85; }
+          .daily-text { display: flex; align-items: baseline; gap: 2px; }
+          .daily-value { font-size: 13px; font-weight: 700; line-height: 1; }
+          .daily-unit { font-size: 10px; font-weight: 500; opacity: 0.8; }
           .meter-info {
             display: flex; justify-content: space-between;
             font-size: 11px; color: var(--secondary-text-color, #999); margin-top: 4px;
@@ -363,18 +398,22 @@ class CbnCard extends HTMLElement {
     `;
   }
 
-  progress(label, rateEntry, remainEntry, totalEntry, unit = "") {
+  progress(label, rateEntry, remainEntry, totalEntry, unit = "", showDaily = false) {
     const rate = this.numberValue(rateEntry);
     const percent = rate === null ? 0 : Math.max(0, Math.min(100, rate));
     const level = this.usageLevel(rate);
     const fillClass = level === "danger" ? "danger" : level === "warn" ? "warn" : "normal";
+    const { perDay, daysLeft } = this.dailyAllowance(remainEntry);
     return `
       <div class="meter">
         <div class="meter-header">
           <span class="meter-name"><span class="meter-dot ${fillClass}"></span>${this.escape(label)}</span>
           <span class="meter-volume">${this.clickableValue(rateEntry)}</span>
         </div>
-        <div class="meter-bar"><div class="meter-bar-fill ${fillClass}" style="width:${percent}%"></div></div>
+        <div class="meter-body">
+          <div class="meter-bar"><div class="meter-bar-fill ${fillClass}" style="width:${percent}%"></div></div>
+          ${showDaily ? this.dailyBadge(perDay, daysLeft) : ""}
+        </div>
         <div class="meter-info">
           <span>剩余 ${this.clickableValue(remainEntry)}${unit ? ` ${this.escape(unit)}` : ""}</span>
           <span>总量 ${this.clickableValue(totalEntry)}${unit ? ` ${this.escape(unit)}` : ""}</span>
@@ -382,6 +421,25 @@ class CbnCard extends HTMLElement {
       </div>
     `;
   }
+
+  /**
+   * 进度条右侧的「日均可用」徽标。
+   * 用剩余天数做副标题，让人一眼知道这个数字是怎么来的。
+   */
+  dailyBadge(perDay, daysLeft) {
+    if (perDay === null) return "";
+    const text = perDay >= 10 ? perDay.toFixed(1) : perDay.toFixed(2);
+    return `
+      <div class="daily-badge" title="剩余流量 ÷ 本月剩余 ${daysLeft} 天（含今天）">
+        <ha-icon icon="mdi:calendar-today"></ha-icon>
+        <div class="daily-text">
+          <span class="daily-value">${this.escape(text)}</span>
+          <span class="daily-unit">GB/天</span>
+        </div>
+      </div>
+    `;
+  }
+
 
   clickableValue(entry, extraClass = "") {
     const className = `clickable-value${extraClass ? ` ${extraClass}` : ""}`;
