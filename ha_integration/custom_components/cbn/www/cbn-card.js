@@ -252,7 +252,10 @@ class CbnCard extends HTMLElement {
               <img class="card-logo" src="/cbn-local/logo.png" alt="logo">
               ${this.escape(this.config.title || "中国广电")}
             </div>
-            <div class="card-subtitle">${this.escape(pack ? this.value(pack) : "")}</div>
+            <div class="header-right">
+              ${this.dailyAllowanceBadge(flowLeft)}
+              <div class="card-subtitle">${this.escape(pack ? this.value(pack) : "")}</div>
+            </div>
           </div>
           ${this.discoveryError ? `<div class="message">实体读取失败：${this.escape(this.discoveryError.message || this.discoveryError)}</div>` : ""}
           ${this.discovering && !this.entities.length ? `<div class="message">正在读取设备实体...</div>` : ""}
@@ -265,7 +268,7 @@ class CbnCard extends HTMLElement {
               ${this.summaryItem("当月消费", monthFee, "mdi:currency-cny", "orange")}
             </div>
             <div class="meters">
-              ${this.progress("本月流量", dataRate, flowLeft, flowTotal, "", true)}
+              ${this.progress("本月流量", dataRate, flowLeft, flowTotal)}
             </div>
             <div class="accordions">
               ${this.accordionSection("流量", "mdi:cellphone-link",
@@ -294,6 +297,22 @@ class CbnCard extends HTMLElement {
             object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.12);
           }
           .card-subtitle { font-size: 12px; color: var(--secondary-text-color, #999); }
+          /* 右上角：日均可用徽标 + 套餐名 并排 */
+          .header-right {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            justify-content: flex-end;
+          }
+          /* 日均可用：浅色胶囊，跟随主题主色，不与标题抢视觉重心 */
+          .daily-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 9px 3px 7px; border-radius: 999px;
+            background: color-mix(in srgb, var(--primary-color, #2196f3) 12%, transparent);
+            color: var(--primary-color, #2196f3);
+            white-space: nowrap; cursor: default; line-height: 1;
+          }
+          .daily-badge ha-icon { --mdi-icon-size: 14px; opacity: 0.85; }
+          .daily-badge .daily-value { font-size: 13px; font-weight: 700; }
+          .daily-badge .daily-unit { font-size: 10px; font-weight: 500; opacity: 0.8; }
           .message { color: var(--secondary-text-color); padding: 12px 16px 4px; font-size: 14px; }
           .summary-row { display: grid; grid-template-columns: repeat(4, 1fr); padding: 12px; gap: 8px; }
           .summary-item {
@@ -328,7 +347,6 @@ class CbnCard extends HTMLElement {
           .meter-dot.warn { background: #FFB300; }
           .meter-dot.danger { background: #E53935; }
           .meter-volume { font-weight: bold; font-size: 14px; }
-          /* 进度条 + 右侧「日均可用」徽标 同一行 */
           .meter-body { display: flex; align-items: center; gap: 10px; }
           .meter-bar {
             flex: 1 1 auto; min-width: 0;
@@ -339,20 +357,6 @@ class CbnCard extends HTMLElement {
           .meter-bar-fill.normal { background: linear-gradient(90deg, #66bb6a, #43a047); }
           .meter-bar-fill.warn { background: linear-gradient(90deg, #ffca28, #ffb300); }
           .meter-bar-fill.danger { background: linear-gradient(90deg, #ef5350, #e53935); }
-          /* 日均可用：浅色胶囊，不与上方百分比抢视觉重心 */
-          .daily-badge {
-            flex: 0 0 auto;
-            display: flex; align-items: center; gap: 5px;
-            padding: 3px 9px 3px 7px; border-radius: 999px;
-            background: var(--primary-color, #2196f3);
-            background: color-mix(in srgb, var(--primary-color, #2196f3) 12%, transparent);
-            color: var(--primary-color, #2196f3);
-            white-space: nowrap; cursor: default;
-          }
-          .daily-badge ha-icon { --mdi-icon-size: 14px; opacity: 0.85; }
-          .daily-text { display: flex; align-items: baseline; gap: 2px; }
-          .daily-value { font-size: 13px; font-weight: 700; line-height: 1; }
-          .daily-unit { font-size: 10px; font-weight: 500; opacity: 0.8; }
           .meter-info {
             display: flex; justify-content: space-between;
             font-size: 11px; color: var(--secondary-text-color, #999); margin-top: 4px;
@@ -398,12 +402,11 @@ class CbnCard extends HTMLElement {
     `;
   }
 
-  progress(label, rateEntry, remainEntry, totalEntry, unit = "", showDaily = false) {
+  progress(label, rateEntry, remainEntry, totalEntry, unit = "") {
     const rate = this.numberValue(rateEntry);
     const percent = rate === null ? 0 : Math.max(0, Math.min(100, rate));
     const level = this.usageLevel(rate);
     const fillClass = level === "danger" ? "danger" : level === "warn" ? "warn" : "normal";
-    const { perDay, daysLeft } = this.dailyAllowance(remainEntry);
     return `
       <div class="meter">
         <div class="meter-header">
@@ -412,7 +415,6 @@ class CbnCard extends HTMLElement {
         </div>
         <div class="meter-body">
           <div class="meter-bar"><div class="meter-bar-fill ${fillClass}" style="width:${percent}%"></div></div>
-          ${showDaily ? this.dailyBadge(perDay, daysLeft) : ""}
         </div>
         <div class="meter-info">
           <span>剩余 ${this.clickableValue(remainEntry)}${unit ? ` ${this.escape(unit)}` : ""}</span>
@@ -423,19 +425,18 @@ class CbnCard extends HTMLElement {
   }
 
   /**
-   * 进度条右侧的「日均可用」徽标。
-   * 用剩余天数做副标题，让人一眼知道这个数字是怎么来的。
+   * 顶部右上角、套餐名左侧的「日均可用」徽标。
+   * 日均可用 = 剩余流量 ÷ 本月剩余天数（含今天），纯前端按自然月算。
    */
-  dailyBadge(perDay, daysLeft) {
+  dailyAllowanceBadge(remainEntry) {
+    const { perDay, daysLeft } = this.dailyAllowance(remainEntry);
     if (perDay === null) return "";
     const text = perDay >= 10 ? perDay.toFixed(1) : perDay.toFixed(2);
     return `
-      <div class="daily-badge" title="剩余流量 ÷ 本月剩余 ${daysLeft} 天（含今天）">
+      <div class="daily-badge" title="日均可用：剩余流量 ÷ 本月剩余 ${daysLeft} 天（含今天）">
         <ha-icon icon="mdi:calendar-today"></ha-icon>
-        <div class="daily-text">
-          <span class="daily-value">${this.escape(text)}</span>
-          <span class="daily-unit">GB/天</span>
-        </div>
+        <span class="daily-value">${this.escape(text)}</span>
+        <span class="daily-unit">GB/天</span>
       </div>
     `;
   }
